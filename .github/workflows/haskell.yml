@@ -7,12 +7,37 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      GHC_VERSION: '9.10.3'
+      CABAL_VERSION: '3.16.1.0'
     steps:
       - uses: actions/checkout@v4
         with: { submodules: recursive }
       - uses: ./.github/actions/setup-deps
+      # Installing GHC through ghcup takes ~2.5 min, so cache the GHC ghcup installs.
+      # Only ghc/<version> is cached: /usr/local/.ghcup itself is root-owned (tar cannot set its
+      # mode/times) and holds the runner image's preinstalled GHC. cabal is NOT cached: ghcup finds
+      # an installed cabal through a symlink in .ghcup/bin, which we don't restore, so it would
+      # fail trying to reinstall into the restored dir. cabal installs in ~20s anyway (cache ~330 MiB).
+      - name: Cache ghcup GHC
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/.ghcup/ghc/${{ env.GHC_VERSION }}
+          key: ghcup-v3-${{ runner.os }}-ghc${{ env.GHC_VERSION }}
       - uses: haskell-actions/setup@v2
-        with: { ghc-version: '9.10.3', cabal-version: '3.16.1.0' }
+        with: { ghc-version: '${{ env.GHC_VERSION }}', cabal-version: '${{ env.CABAL_VERSION }}' }
+      # haskell/cabal.project pins `with-compiler: ghc-<version>`. On a cache hit ghcup's versioned
+      # symlinks in .ghcup/bin are not restored, so recreate them (harmless on a cache miss).
+      - name: Link versioned GHC binaries
+        run: |
+          for f in /usr/local/.ghcup/ghc/${GHC_VERSION}/bin/*-${GHC_VERSION}; do
+            ln -sf "$f" "$HOME/.ghcup/bin/$(basename "$f")"
+          done
+      - name: Show toolchain versions
+        run: |
+          ghc --version
+          cabal --version
+          which ghc cabal
       - uses: actions/cache@v4
         with:
           path: |
