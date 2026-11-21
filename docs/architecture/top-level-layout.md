@@ -11,6 +11,9 @@
 │   ├── csharp.yml
 │   ├── haskell.yml
 │   └── benchmarks.yml            # scheduled/manual, not on every PR
+├── vcpkg.json                    # pinned SDL3 (see dependencies.md)
+├── scripts/                      # setup-deps / env scripts (sh + ps1)
+├── vendor/vcpkg/                 # vcpkg submodule
 ├── cpp/
 ├── csharp/
 ├── haskell/

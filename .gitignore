@@ -9,3 +9,6 @@
 # OS
 .DS_Store
 Thumbs.db
+
+# vcpkg install output (see scripts/setup-deps.sh)
+vcpkg_installed/

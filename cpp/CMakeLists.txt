@@ -19,7 +19,11 @@ endif()
 
 add_compile_options(-Wall -Wextra -Wpedantic)
 
-find_package(SDL3 3.4 REQUIRED CONFIG)
+# SDL3 comes only from the pinned vcpkg install: `source scripts/env.sh` (build.sh does this).
+if(NOT DEFINED ENV{SIM_VCPKG_PREFIX})
+  message(FATAL_ERROR "SIM_VCPKG_PREFIX is not set. Run scripts/setup-deps.sh, then `source scripts/env.sh`.")
+endif()
+find_package(SDL3 3.4 REQUIRED CONFIG PATHS "$ENV{SIM_VCPKG_PREFIX}" NO_DEFAULT_PATH)
 
 enable_testing()
 add_subdirectory(apps/hello-window)

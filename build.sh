@@ -17,6 +17,11 @@ for a in "$@"; do
 done
 app="${target#apps/}"   # e.g. hello-window ("" = everything)
 
+# SDL3 comes from the pinned vcpkg install (see docs/architecture/dependencies.md).
+"$root/scripts/setup-deps.sh"
+# shellcheck source=scripts/env.sh
+. "$root/scripts/env.sh"
+
 smoke_env=(SDL_VIDEO_DRIVER=dummy SDL_RENDER_DRIVER=software)
 
 build_cpp() {

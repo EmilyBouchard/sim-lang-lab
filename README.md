@@ -30,13 +30,21 @@ then Barnes-Hut, then the Fast Multipole Method, in 2D and 3D.
 | C++ | A C++23 compiler (GCC or Clang), CMake with presets |
 | C# | .NET SDK (needed for generic math, `INumber<T>`) |
 | Haskell | GHC + Cabal (or Stack), [`sdl3-hs`](https://github.com/klukaszek/sdl3-hs) (git submodule, see below) |
-| All | SDL 3.4, SQLite 3 |
+| All | SDL 3.4 (installed for you by vcpkg), SQLite 3 |
 | Benchmark reports | Python 3 |
+
+### SDL3 (vcpkg)
+
+SDL3 is installed by a vcpkg submodule at a pinned version, so all three languages build
+against the same library. `./build.sh` does this automatically on first use (the first build
+takes a few minutes, since SDL3 is built from source). On Linux you need a few system
+packages first, such as `zip`, `autoconf`, `autoconf-archive`, `automake`, `libtool` and the
+X11/Wayland dev packages. See [`docs/architecture/dependencies.md`](/docs/architecture/dependencies.md).
 
 ### Submodules
 
-`sdl3-hs` is not on Hackage, so it is vendored as a git submodule at
-`haskell/vendor/sdl3-hs` and built as part of the Haskell project
+This repo has two submodules: `vendor/vcpkg` (see above), and `sdl3-hs`, which is not on
+Hackage, so it is vendored at `haskell/vendor/sdl3-hs` and built as part of the Haskell project
 (`haskell/cabal.project`). If you cloned without `--recurse-submodules`, run:
 
 ```bash

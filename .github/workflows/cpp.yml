@@ -1,24 +1,17 @@
 name: cpp
 on:
   push:
-    paths: ['cpp/**', 'shared/**', '.github/workflows/cpp.yml']
+    paths: ['cpp/**', 'shared/**', 'scripts/**', 'vcpkg.json', 'vendor/vcpkg', '.github/**']
   pull_request:
-    paths: ['cpp/**', 'shared/**', '.github/workflows/cpp.yml']
+    paths: ['cpp/**', 'shared/**', 'scripts/**', 'vcpkg.json', 'vendor/vcpkg', '.github/**']
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install deps
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ninja-build ccache libsdl3-dev || true
+        with: { submodules: recursive }
+      - uses: ./.github/actions/setup-deps
       - uses: hendrikmuhs/ccache-action@v1.2
         with: { key: cpp }
-      # NOTE: libsdl3-dev may not be in Ubuntu's repos yet; see docs/architecture/open-items.md
       - name: Build + smoke test (ASan/UBSan, dummy video driver)
-        working-directory: cpp
-        run: |
-          cmake --preset debug
-          cmake --build --preset debug
-          ctest --preset debug
+        run: ./build.sh cpp apps/hello-window --test

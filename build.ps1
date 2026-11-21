@@ -18,6 +18,10 @@ param(
 $ErrorActionPreference = 'Stop'
 $Root = $PSScriptRoot
 $App = $Target -replace '^apps[/\\]', ''   # e.g. hello-window ("" = everything)
+# SDL3 comes from the pinned vcpkg install (see docs/architecture/dependencies.md).
+& (Join-Path $Root 'scripts/setup-deps.ps1')
+. (Join-Path $Root 'scripts/env.ps1')
+
 $SmokeApp = if ($App) { $App } else { 'hello-window' }
 
 # Run a native command and fail the script if it returns a non-zero exit code.

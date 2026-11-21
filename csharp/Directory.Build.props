@@ -6,5 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Pinned SDL3 from vcpkg: run scripts/setup-deps and `source scripts/env.sh` (build.sh does both). -->
+    <SimVcpkgPrefix>$(SIM_VCPKG_PREFIX)</SimVcpkgPrefix>
   </PropertyGroup>
 </Project>

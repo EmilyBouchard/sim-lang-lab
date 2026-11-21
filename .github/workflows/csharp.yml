@@ -1,20 +1,17 @@
 name: csharp
 on:
   push:
-    paths: ['csharp/**', 'shared/**', '.github/workflows/csharp.yml']
+    paths: ['csharp/**', 'shared/**', 'scripts/**', 'vcpkg.json', 'vendor/vcpkg', '.github/**']
   pull_request:
-    paths: ['csharp/**', 'shared/**', '.github/workflows/csharp.yml']
+    paths: ['csharp/**', 'shared/**', 'scripts/**', 'vcpkg.json', 'vendor/vcpkg', '.github/**']
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with: { submodules: recursive }
+      - uses: ./.github/actions/setup-deps
       - uses: actions/setup-dotnet@v4
         with: { dotnet-version: '10.0.x' }
-      - name: Build
-        working-directory: csharp
-        run: dotnet build --nologo
-      - name: Smoke run (headless)
-        working-directory: csharp
-        env: { SDL_VIDEO_DRIVER: dummy, SDL_RENDER_DRIVER: software }
-        run: dotnet run --project Apps/HelloWindow --no-build -- --frames 5
+      - name: Build + smoke run (headless)
+        run: ./build.sh csharp apps/hello-window --test
