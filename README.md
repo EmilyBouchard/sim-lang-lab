@@ -27,7 +27,7 @@ then Barnes-Hut, then the Fast Multipole Method, in 2D and 3D.
 
 | Language | Toolchain |
 |---|---|
-| C++ | A C++20 compiler (GCC or Clang), CMake with presets |
+| C++ | A C++23 compiler (GCC or Clang), CMake with presets |
 | C# | .NET SDK (needed for generic math, `INumber<T>`) |
 | Haskell | GHC + Cabal (or Stack), [`sdl3-hs`](https://github.com/klukaszek/sdl3-hs) |
 | All | SDL 3.4, SQLite 3 |
@@ -48,6 +48,36 @@ cd sim-lang-lab
 You can also build each language directory directly with its own tools
 (`cmake`, `dotnet`, `cabal`). See
 [`docs/architecture/build-orchestration.md`](/docs/architecture/build-orchestration.md).
+
+### Formatting and git hooks
+
+Each language has its own formatter config:
+
+| Language | Formatter | Config |
+|---|---|---|
+| C++ | `clang-format` | `cpp/.clang-format` |
+| C# | `dotnet format` | `.editorconfig`, `csharp/.editorconfig` |
+| Haskell | `fourmolu` | `haskell/fourmolu.yaml` |
+
+```bash
+./format.sh                 # format every language
+./format.sh cpp             # format one language
+./format.sh all --check     # check only, change nothing
+```
+
+A `pre-commit` hook in `.githooks/` runs `./format.sh <lang> --check` for each
+language with staged changes, and blocks the commit if the check fails. Git
+doesn't copy hook settings when you clone, so enable it once per clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+It works on Linux and on Windows (Git for Windows runs it with its bundled
+`sh` and `bash`). On Windows you still need `clang-format`, `fourmolu` and the
+.NET SDK on your `PATH`. To fix a failed check, run `./format.sh`, stage the
+changes and commit again. To skip the hook in an emergency, use
+`git commit --no-verify`.
 
 ## Documentation
 

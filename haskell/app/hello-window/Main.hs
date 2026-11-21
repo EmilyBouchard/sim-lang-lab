@@ -1,5 +1,6 @@
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE OverloadedRecordDot #-}
+
 module Main (main) where
 
 import Control.Exception (bracket, bracket_)
