@@ -27,6 +27,9 @@ $SmokeApp = if ($App) { $App } else { 'hello-window' }
 # Run a native command and fail the script if it returns a non-zero exit code.
 function Invoke-Native {
     param([Parameter(Mandatory)][string]$Command, [string[]]$Arguments = @())
+    # Windows PowerShell 5.1 turns native stderr output into a terminating error under 'Stop';
+    # judge success by the exit code instead.
+    $ErrorActionPreference = 'Continue'
     & $Command @Arguments
     if ($LASTEXITCODE -ne 0) {
         throw "'$Command $($Arguments -join ' ')' failed with exit code $LASTEXITCODE"
@@ -53,6 +56,10 @@ function ConvertTo-Pascal([string]$Name) {
 }
 
 function Build-Cpp {
+    # MSVC environment (cl, link, ASan runtime on PATH). vcvars also sets Platform=x64, which
+    # MSBuild would pick up and change dotnet's output path, so restore the environment afterwards.
+    $savedEnv = [Environment]::GetEnvironmentVariables('Process')
+    . (Join-Path $Root 'scripts/vsenv.ps1')
     Push-Location (Join-Path $Root 'cpp')
     try {
         Invoke-Native cmake @('--preset', 'debug')
@@ -62,7 +69,13 @@ function Build-Cpp {
         if ($Test) { Invoke-Native ctest @('--preset', 'debug') }
         if ($Run) { Invoke-Native (Join-Path "build/debug/apps/$SmokeApp" "$SmokeApp.exe") }
     }
-    finally { Pop-Location }
+    finally {
+        Pop-Location
+        foreach ($name in @([Environment]::GetEnvironmentVariables('Process').Keys)) {
+            if (-not $savedEnv.Contains($name)) { Remove-Item "env:$name" }
+        }
+        foreach ($name in $savedEnv.Keys) { Set-Item "env:$name" $savedEnv[$name] }
+    }
 }
 
 function Build-Csharp {
@@ -80,6 +93,9 @@ function Build-Csharp {
 }
 
 function Build-Haskell {
+    if (-not (Test-Path (Join-Path $Root 'haskell/vendor/sdl3-hs/sdl3.cabal'))) {
+        Invoke-Native git @('-C', $Root, 'submodule', 'update', '--init', 'haskell/vendor/sdl3-hs')
+    }
     Push-Location (Join-Path $Root 'haskell')
     try {
         Invoke-Native cabal @('build', $(if ($App) { $App } else { 'all' }))

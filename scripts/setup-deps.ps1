@@ -6,6 +6,9 @@ $root = Split-Path -Parent $PSScriptRoot
 
 function Invoke-Native {
     param([Parameter(Mandatory)][string]$Command, [string[]]$Arguments = @())
+    # Windows PowerShell 5.1 turns native stderr output into a terminating error under 'Stop';
+    # judge success by the exit code instead.
+    $ErrorActionPreference = 'Continue'
     & $Command @Arguments
     if ($LASTEXITCODE -ne 0) { throw "'$Command $($Arguments -join ' ')' failed with exit code $LASTEXITCODE" }
 }

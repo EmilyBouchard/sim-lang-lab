@@ -11,13 +11,21 @@ if(CCACHE_PROGRAM)
   set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
 endif()
 
-option(SIM_SANITIZE "Build with AddressSanitizer + UBSan" OFF)
-if(SIM_SANITIZE)
-  add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer)
-  add_link_options(-fsanitize=address,undefined)
+option(SIM_SANITIZE "Build with AddressSanitizer (+ UBSan where supported)" OFF)
+if(MSVC)
+  # MSVC has ASan but no UBSan. ASan is incompatible with the default /RTC1 runtime checks.
+  if(SIM_SANITIZE)
+    add_compile_options(/fsanitize=address)
+    string(REGEX REPLACE "/RTC[1csu]+" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+  endif()
+  add_compile_options(/W4 /permissive- /utf-8 /Zc:__cplusplus)
+else()
+  if(SIM_SANITIZE)
+    add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer)
+    add_link_options(-fsanitize=address,undefined)
+  endif()
+  add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
-
-add_compile_options(-Wall -Wextra -Wpedantic)
 
 # SDL3 comes only from the pinned vcpkg install: `source scripts/env.sh` (build.sh does this).
 if(NOT DEFINED ENV{SIM_VCPKG_PREFIX})
