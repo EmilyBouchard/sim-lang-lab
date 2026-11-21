@@ -20,8 +20,10 @@ then Barnes-Hut, then the Fast Multipole Method, in 2D and 3D.
 
 ## Getting started
 
-> The project is at Tier 0, so the language directories and build scripts below
-> don't exist yet.
+> The project is at Tier 0. The language directories and the build scripts
+> (`build.sh`, `build.ps1`, `format.sh`) exist, but so far the only app is
+> `hello-window` (stage 0.1). The libraries (`math`, `sdl-platform`, ...) and
+> `bench.sh` don't exist yet.
 
 ### Prerequisites
 
@@ -60,10 +62,11 @@ deliberately, so the pinned version only changes on purpose.
 git clone --recurse-submodules https://github.com/EmilyBouchard/sim-lang-lab.git
 cd sim-lang-lab
 
-./build.sh all              # build every language
-./build.sh cpp --test       # build and test one language
-./build.sh haskell math     # build a single library or app
-./bench.sh                  # run benchmarks and compare languages
+./build.sh all                              # build every language
+./build.sh cpp --test                       # build and smoke-test one language
+./build.sh haskell apps/hello-window --run  # build and run a single app (opens a window)
+./build.ps1 all -Test                       # same on Windows (PowerShell)
+./bench.sh                                  # (planned) run benchmarks and compare languages
 ```
 
 You can also build each language directory directly with its own tools
