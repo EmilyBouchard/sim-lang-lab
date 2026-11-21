@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Fetch, bootstrap and run vcpkg to install the pinned SDL3 (see vcpkg.json).
-# Idempotent: does nothing when vcpkg.json and the vcpkg checkout are unchanged.
+# Idempotent: does nothing when vcpkg.json and the vcpkg checkout are unchanged
+# (tracked by a stamp file in vcpkg_installed/).
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=env.sh
