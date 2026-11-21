@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>SimLab.HelloWindow</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="SDL3-CS" Version="3.4.20" />
+  </ItemGroup>
+</Project>

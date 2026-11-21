@@ -1,0 +1,29 @@
+name: haskell
+on:
+  push:
+    paths: ['haskell/**', 'shared/**', '.github/workflows/haskell.yml']
+  pull_request:
+    paths: ['haskell/**', 'shared/**', '.github/workflows/haskell.yml']
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: haskell-actions/setup@v2
+        with: { ghc-version: '9.10.3', cabal-version: '3.16.1.0' }
+      - name: Install SDL3
+        run: sudo apt-get update && sudo apt-get install -y libsdl3-dev pkg-config || true
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cabal/packages
+            ~/.cabal/store
+            haskell/dist-newstyle
+          key: haskell-${{ hashFiles('haskell/*.cabal', 'haskell/cabal.project') }}
+      - name: Build
+        working-directory: haskell
+        run: cabal build all
+      - name: Smoke run (headless)
+        working-directory: haskell
+        env: { SDL_VIDEO_DRIVER: dummy, SDL_RENDER_DRIVER: software }
+        run: cabal run -v0 hello-window -- --frames 5
