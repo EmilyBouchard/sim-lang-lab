@@ -1,2 +1,5 @@
-packages: .
+packages:
+  .
+  vendor/sdl3-hs
+
 with-compiler: ghc-9.10.3

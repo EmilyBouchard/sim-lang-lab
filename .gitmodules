@@ -1,0 +1,3 @@
+[submodule "haskell/vendor/sdl3-hs"]
+	path = haskell/vendor/sdl3-hs
+	url = https://github.com/klukaszek/sdl3-hs.git

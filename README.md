@@ -29,14 +29,27 @@ then Barnes-Hut, then the Fast Multipole Method, in 2D and 3D.
 |---|---|
 | C++ | A C++23 compiler (GCC or Clang), CMake with presets |
 | C# | .NET SDK (needed for generic math, `INumber<T>`) |
-| Haskell | GHC + Cabal (or Stack), [`sdl3-hs`](https://github.com/klukaszek/sdl3-hs) |
+| Haskell | GHC + Cabal (or Stack), [`sdl3-hs`](https://github.com/klukaszek/sdl3-hs) (git submodule, see below) |
 | All | SDL 3.4, SQLite 3 |
 | Benchmark reports | Python 3 |
+
+### Submodules
+
+`sdl3-hs` is not on Hackage, so it is vendored as a git submodule at
+`haskell/vendor/sdl3-hs` and built as part of the Haskell project
+(`haskell/cabal.project`). If you cloned without `--recurse-submodules`, run:
+
+```bash
+git submodule update --init
+```
+
+To move to a newer `sdl3-hs`, update the submodule and commit the new pointer
+deliberately, so the pinned version only changes on purpose.
 
 ### Build and test
 
 ```bash
-git clone https://github.com/EmilyBouchard/sim-lang-lab.git
+git clone --recurse-submodules https://github.com/EmilyBouchard/sim-lang-lab.git
 cd sim-lang-lab
 
 ./build.sh all              # build every language
