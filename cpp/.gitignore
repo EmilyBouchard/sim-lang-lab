@@ -2,3 +2,30 @@ build/
 .cache/
 .ccache/
 compile_commands.json
+
+# Visual Studio: open-folder (CMake) workflow and generated solutions
+.vs/
+out/
+*.user
+*.suo
+*.sln.docstates
+*.vcxproj.filters.user
+enc_temp_folder/
+
+# Visual Studio IntelliSense and browsing databases
+*.ipch
+*.VC.db
+*.VC.db-shm
+*.VC.db-wal
+*.VC.opendb
+
+# MSVC build outputs when built outside build/
+*.pdb
+*.ilk
+*.idb
+*.obj
+
+# VS-generated CMake settings. This project configures CMake with CMakePresets.json; per-user
+# presets go in CMakeUserPresets.json.
+CMakeSettings.json
+CMakeUserPresets.json
