@@ -15,7 +15,7 @@ then Barnes-Hut, then the Fast Multipole Method, in 2D and 3D.
   with no dependencies on each other, and each one implements the same features.
 - **Hand-rolled math:** vectors, matrices and quaternions are written from
   scratch in each language, and every type works with both `float` and `double`.
-- **Reproducible:** simulations are deterministic, CI never uses the network, and
+- **Reproducible:** simulations are deterministic, the tests never use the network (JPL data comes only from committed reference files), and
   every language writes benchmark results in one shared format.
 
 ## Getting started
@@ -29,11 +29,29 @@ then Barnes-Hut, then the Fast Multipole Method, in 2D and 3D.
 
 | Language | Toolchain |
 |---|---|
-| C++ | A C++23 compiler (GCC or Clang), CMake with presets |
-| C# | .NET SDK (needed for generic math, `INumber<T>`) |
-| Haskell | GHC + Cabal (or Stack), [`sdl3-hs`](https://github.com/klukaszek/sdl3-hs) (git submodule, see below) |
+| C++ | A C++23 compiler (GCC or Clang on Linux; MSVC on Windows), CMake 3.28+ with presets, Ninja |
+| C# | .NET SDK (needed for generic math, `INumber<T>`); the projects target `net10.0` |
+| Haskell | GHC 9.10.3 (pinned in `haskell/cabal.project`) + Cabal 3.16, [`sdl3-hs`](https://github.com/klukaszek/sdl3-hs) (git submodule, see below) |
 | All | SDL 3.4 (installed for you by vcpkg), SQLite 3 |
 | Benchmark reports | Python 3 |
+
+### Windows
+
+Run the build from PowerShell with `.uild.ps1` (see below). You need:
+
+- **Visual Studio 2022 or newer (or Build Tools) with the "Desktop development with C++" workload.**
+  `build.ps1` finds it with `vswhere` and loads the MSVC x64 environment through
+  `scripts/vsenv.ps1`, so you don't need a Developer prompt.
+- CMake, Ninja, the .NET SDK, and GHC + Cabal (for example from [ghcup](https://www.haskell.org/ghcup/)) on `PATH`.
+- Git for Windows (the pre-commit hook runs under its bundled `sh`).
+
+If PowerShell refuses to run the script, allow local scripts once with
+`Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`, or run
+`powershell -ExecutionPolicy Bypass -File .\build.ps1 all -Test`.
+
+On Windows the C++ and Haskell executables find `SDL3.dll` through `PATH` (set up by
+`scripts/env.ps1`), so run them through `build.ps1`, or dot-source `scripts/env.ps1` first.
+The C# build copies `SDL3.dll` next to the app.
 
 ### SDL3 (vcpkg)
 
@@ -52,6 +70,8 @@ Hackage, so it is vendored at `haskell/vendor/sdl3-hs` and built as part of the 
 ```bash
 git submodule update --init
 ```
+
+`build.sh` and `build.ps1` run this for you on every build.
 
 To move to a newer `sdl3-hs`, update the submodule and commit the new pointer
 deliberately, so the pinned version only changes on purpose.
@@ -87,6 +107,7 @@ Each language has its own formatter config:
 ./format.sh                 # format every language
 ./format.sh cpp             # format one language
 ./format.sh all --check     # check only, change nothing
+.\format.ps1 all -Check        # same on Windows (PowerShell; runs format.sh through Git's bash)
 ```
 
 A `pre-commit` hook in `.githooks/` runs `./format.sh <lang> --check` for each
