@@ -2,10 +2,18 @@
 
 module Main (main) where
 
-import Control.Exception (bracket, bracket_)
+import Control.Exception (bracket, finally)
 import Control.Monad (unless)
 import SDL3
 import System.Environment (getArgs)
+
+windowTitle :: String
+windowTitle = "hello-window"
+windowWidth :: Int
+windowWidth = 800
+windowHeight :: Int
+windowHeight = 600
+windowOption = 0
 
 -- | Optional @--frames N@ exits after N frames (used by the headless smoke test).
 parseFrames :: [String] -> Maybe Int
@@ -31,17 +39,24 @@ quitRequested = go False
     isQuit (SDLEventKeyboard k) = sdlKeyboardType k == SDL_EVENT_KEY_DOWN && sdlKeyboardKey k == SDLKEscape
     isQuit _ = False
 
+createSDLWindowAndRenderer :: IO (SDLWindow, SDLRenderer)
+createSDLWindowAndRenderer =
+  maybe (sdlFail "SDL_CreateWindowAndRenderer") pure
+    =<< sdlCreateWindowAndRenderer windowTitle windowWidth windowHeight windowOption
+
+withSDLWindowAndRenderer :: ((SDLWindow, SDLRenderer) -> IO a) -> IO a
+withSDLWindowAndRenderer =
+  bracket
+    createSDLWindowAndRenderer
+    (\(window, renderer) -> sdlDestroyRenderer renderer >> sdlDestroyWindow window)
+
 main :: IO ()
 main = do
   maxFrames <- parseFrames <$> getArgs
-  ok <- sdlInit [SDL_INIT_VIDEO]
-  unless ok (sdlFail "SDL_Init")
-  bracket_ (pure ()) sdlQuit do
-    created <- sdlCreateWindowAndRenderer "hello-window" 800 600 0
-    (window, renderer) <- maybe (sdlFail "SDL_CreateWindowAndRenderer") pure created
-    bracket (pure ()) (\_ -> sdlDestroyRenderer renderer >> sdlDestroyWindow window) \_ ->
-      loop renderer maxFrames
+  sdlInit [SDL_INIT_VIDEO] `orFail` "SDL_Init"
+  withSDLWindowAndRenderer (\(_, renderer) -> loop renderer maxFrames) `finally` sdlQuit
   where
+    orFail act what = act >>= \ok -> unless ok (sdlFail what)
     loop renderer remaining = case remaining of
       Just 0 -> pure ()
       _ -> do
