@@ -37,7 +37,7 @@ then Barnes-Hut, then the Fast Multipole Method, in 2D and 3D.
 
 ### Windows
 
-Run the build from PowerShell with `.uild.ps1` (see below). You need:
+Run the build from PowerShell with `.\build.ps1` (see below). You need:
 
 - **Visual Studio 2022 or newer (or Build Tools) with the "Desktop development with C++" workload.**
   `build.ps1` finds it with `vswhere` and loads the MSVC x64 environment through
@@ -49,9 +49,10 @@ If PowerShell refuses to run the script, allow local scripts once with
 `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`, or run
 `powershell -ExecutionPolicy Bypass -File .\build.ps1 all -Test`.
 
-On Windows the C++ and Haskell executables find `SDL3.dll` through `PATH` (set up by
-`scripts/env.ps1`), so run them through `build.ps1`, or dot-source `scripts/env.ps1` first.
-The C# build copies `SDL3.dll` next to the app.
+The build puts `SDL3.dll` next to each executable, so the apps run by double-click or from any shell,
+without the vcpkg setup: CMake copies it for C++ (plus the ASan runtime in debug builds), the `.csproj`
+copies it for C#, and `build.ps1` copies it for Haskell, because cabal has no post-build step. If you
+build Haskell with plain `cabal build`, run `.\build.ps1 haskell` once to refresh the copy.
 
 ### SDL3 (vcpkg)
 

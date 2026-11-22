@@ -1,5 +1,6 @@
 add_executable(hello-window src/main.cpp)
 target_link_libraries(hello-window PRIVATE SDL3::SDL3 CLI11::CLI11)
+sim_copy_runtime_dlls(hello-window)
 
 # Headless smoke test: dummy video driver, exits by itself after a few frames.
 add_test(NAME hello-window-smoke COMMAND hello-window --frames 5)

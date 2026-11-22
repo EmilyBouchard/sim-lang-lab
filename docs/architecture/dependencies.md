@@ -24,11 +24,11 @@ static, which would bake SDL into each binary and leave C# with nothing to load.
 ## How each language finds SDL3
 
 - **C++:** `find_package(SDL3 3.4 CONFIG PATHS $ENV{SIM_VCPKG_PREFIX} NO_DEFAULT_PATH)` in
-  `cpp/CMakeLists.txt`. On Linux CMake records the library directory as the binary's RPATH. On Windows there is no RPATH, so the exe finds `SDL3.dll` through the `PATH` entry added by `scripts/env.ps1`.
+  `cpp/CMakeLists.txt`. On Linux CMake records the library directory as the binary's RPATH. On Windows there is no RPATH, so `sim_copy_runtime_dlls()` (in `cpp/CMakeLists.txt`) copies `SDL3.dll`, and the ASan runtime for sanitizer builds, next to the exe after each build.
 - **C#:** `SDL3-CS` ships no native library. `HelloWindow.csproj` copies `libSDL3.so` (Linux) or
   `SDL3.dll` (Windows) from the vcpkg prefix into the output folder, and .NET loads it from there.
 - **Haskell (`sdl3-hs`):** its `pkgconfig-depends: sdl3` is resolved with `PKG_CONFIG_LIBDIR`
-  pointing at the vcpkg `.pc` files, which also supply the rpath on Linux (Windows uses `PATH`, as for C++). Cabal looks for `pkg-config`, but vcpkg's port only ships `pkgconf.exe`, so `scripts/env.ps1` copies it to `pkg-config.exe`.
+  pointing at the vcpkg `.pc` files, which also supply the rpath on Linux (on Windows `build.ps1` copies `SDL3.dll` next to each Haskell exe after `cabal build`). Cabal looks for `pkg-config`, but vcpkg's port only ships `pkgconf.exe`, so `scripts/env.ps1` copies it to `pkg-config.exe`.
 
 ## Command-line parsing
 

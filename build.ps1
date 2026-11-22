@@ -101,6 +101,14 @@ function Build-Haskell {
     Push-Location (Join-Path $Root 'haskell')
     try {
         Invoke-Native cabal @('build', $(if ($App) { $App } else { 'all' }))
+        # cabal has no post-build hook, so copy SDL3.dll next to each executable (the C++ build and the
+        # C# project do the same). Then it runs by double-click or from a shell without the vcpkg setup.
+        $apps = if ($App) { @($App) } else { @(Get-ChildItem (Join-Path $Root 'haskell/app') -Directory | ForEach-Object Name) }
+        foreach ($name in $apps) {
+            $bin = & { $ErrorActionPreference = 'Continue'; cabal list-bin "exe:$name" 2>$null } | Select-Object -Last 1
+            if (-not $bin) { throw "cabal list-bin exe:$name returned nothing" }
+            Copy-Item (Join-Path $env:SIM_VCPKG_PREFIX 'bin/SDL3.dll') (Split-Path -Parent $bin) -Force
+        }
         if ($Test) {
             Invoke-Headless { Invoke-Native cabal @('run', '-v0', $SmokeApp, '--', '--frames', '5') }
         }

@@ -43,5 +43,27 @@ add_library(CLI11 INTERFACE)
 add_library(CLI11::CLI11 ALIAS CLI11)
 target_include_directories(CLI11 SYSTEM INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/third_party/CLI11")
 
+# Copy the DLLs an executable needs next to it, so it runs from any shell or by double-click.
+# Windows only: on Linux the binary records an RPATH to the vcpkg install instead.
+function(sim_copy_runtime_dlls target)
+  if(NOT WIN32)
+    return()
+  endif()
+  add_custom_command(TARGET ${target} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:${target}> $<TARGET_FILE_DIR:${target}>
+    COMMAND_EXPAND_LISTS)
+  # MSVC AddressSanitizer needs its runtime DLLs. They sit next to cl.exe, which is on PATH only
+  # inside a Visual Studio environment.
+  if(MSVC AND SIM_SANITIZE)
+    get_filename_component(_compiler_dir "${CMAKE_CXX_COMPILER}" DIRECTORY)
+    foreach(_dll clang_rt.asan_dynamic-x86_64.dll clang_rt.asan_dbg_dynamic-x86_64.dll)
+      if(EXISTS "${_compiler_dir}/${_dll}")
+        add_custom_command(TARGET ${target} POST_BUILD
+          COMMAND ${CMAKE_COMMAND} -E copy_if_different "${_compiler_dir}/${_dll}" $<TARGET_FILE_DIR:${target}>)
+      endif()
+    endforeach()
+  endif()
+endfunction()
+
 enable_testing()
 add_subdirectory(apps/hello-window)
