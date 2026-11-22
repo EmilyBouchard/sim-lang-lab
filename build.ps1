@@ -18,6 +18,11 @@ param(
 $ErrorActionPreference = 'Stop'
 $Root = $PSScriptRoot
 $App = $Target -replace '^apps[/\\]', ''   # e.g. hello-window ("" = everything)
+# Always sync submodules (vcpkg, sdl3-hs): offline and instant when already up to date.
+$ErrorActionPreference = 'Continue'   # git reports progress on stderr; judge by exit code (PS 5.1)
+git -C $Root submodule update --init
+$ErrorActionPreference = 'Stop'
+if ($LASTEXITCODE -ne 0) { throw 'git submodule update --init failed' }
 # SDL3 comes from the pinned vcpkg install (see docs/architecture/dependencies.md).
 & (Join-Path $Root 'scripts/setup-deps.ps1')
 . (Join-Path $Root 'scripts/env.ps1')
@@ -93,9 +98,6 @@ function Build-Csharp {
 }
 
 function Build-Haskell {
-    if (-not (Test-Path (Join-Path $Root 'haskell/vendor/sdl3-hs/sdl3.cabal'))) {
-        Invoke-Native git @('-C', $Root, 'submodule', 'update', '--init', 'haskell/vendor/sdl3-hs')
-    }
     Push-Location (Join-Path $Root 'haskell')
     try {
         Invoke-Native cabal @('build', $(if ($App) { $App } else { 'all' }))

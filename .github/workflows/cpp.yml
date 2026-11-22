@@ -1,9 +1,14 @@
 name: cpp
 on:
   push:
-    paths: ['cpp/**', 'shared/**', 'scripts/**', 'vcpkg.json', 'vendor/vcpkg', '.github/**']
+    paths: ['cpp/**', 'shared/**', 'scripts/**', 'vcpkg.json', 'vendor/vcpkg', 'build.sh', '.github/**']
   pull_request:
-    paths: ['cpp/**', 'shared/**', 'scripts/**', 'vcpkg.json', 'vendor/vcpkg', '.github/**']
+    paths: ['cpp/**', 'shared/**', 'scripts/**', 'vcpkg.json', 'vendor/vcpkg', 'build.sh', '.github/**']
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   build:
     runs-on: ubuntu-latest

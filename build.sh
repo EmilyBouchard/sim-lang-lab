@@ -12,11 +12,14 @@ for a in "$@"; do
   case "$a" in
     --test) do_test=1 ;;
     --run)  do_run=1 ;;
+    -*)     echo "unknown option: $a" >&2; exit 2 ;;
     *)      target="$a" ;;
   esac
 done
 app="${target#apps/}"   # e.g. hello-window ("" = everything)
 
+# Always sync submodules (vcpkg, sdl3-hs): offline and instant when already up to date.
+git -C "$root" submodule update --init
 # SDL3 comes from the pinned vcpkg install (see docs/architecture/dependencies.md).
 "$root/scripts/setup-deps.sh"
 # shellcheck source=scripts/env.sh

@@ -1,9 +1,14 @@
 name: haskell
 on:
   push:
-    paths: ['haskell/**', 'shared/**', 'scripts/**', 'vcpkg.json', 'vendor/vcpkg', '.github/**']
+    paths: ['haskell/**', 'shared/**', 'scripts/**', 'vcpkg.json', 'vendor/vcpkg', 'build.sh', '.github/**']
   pull_request:
-    paths: ['haskell/**', 'shared/**', 'scripts/**', 'vcpkg.json', 'vendor/vcpkg', '.github/**']
+    paths: ['haskell/**', 'shared/**', 'scripts/**', 'vcpkg.json', 'vendor/vcpkg', 'build.sh', '.github/**']
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   build:
     runs-on: ubuntu-latest

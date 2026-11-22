@@ -1,24 +1,28 @@
 #!/usr/bin/env bash
 # Fetch, bootstrap and run vcpkg to install the pinned SDL3 (see vcpkg.json).
 # Idempotent: does nothing when vcpkg.json and the vcpkg checkout are unchanged
-# (tracked by a stamp file in vcpkg_installed/).
+# (tracked by a stamp file in vcpkg_installed/). On a cache hit it never touches the network.
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=env.sh
 . "$root/scripts/env.sh"
 
 vcpkg_dir="$root/vendor/vcpkg"
-if [[ ! -f "$vcpkg_dir/bootstrap-vcpkg.sh" ]]; then
-  git -C "$root" submodule update --init vendor/vcpkg
-fi
-if [[ ! -x "$vcpkg_dir/vcpkg" ]]; then
-  "$vcpkg_dir/bootstrap-vcpkg.sh" -disableMetrics
-fi
+git -C "$root" submodule update --init vendor/vcpkg   # offline and instant when up to date
 
 stamp="$root/vcpkg_installed/.stamp-$SIM_VCPKG_TRIPLET"
 want="$(cksum < "$root/vcpkg.json") $(git -C "$vcpkg_dir" rev-parse HEAD)"
 if [[ -f "$stamp" && "$(cat "$stamp")" == "$want" && -d "$SIM_VCPKG_PREFIX/share/sdl3" ]]; then
   exit 0
+fi
+
+# (Re)bootstrap the vcpkg tool if it is missing or the pinned tool version changed.
+tool_stamp="$root/vcpkg_installed/.tool-stamp"
+tool_want="$(cksum < "$vcpkg_dir/scripts/vcpkg-tool-metadata.txt")"
+if [[ ! -x "$vcpkg_dir/vcpkg" || ! -f "$tool_stamp" || "$(cat "$tool_stamp")" != "$tool_want" ]]; then
+  "$vcpkg_dir/bootstrap-vcpkg.sh" -disableMetrics
+  mkdir -p "$root/vcpkg_installed"
+  echo "$tool_want" > "$tool_stamp"
 fi
 
 echo "setup-deps: installing vcpkg dependencies ($SIM_VCPKG_TRIPLET)..."

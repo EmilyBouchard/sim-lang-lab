@@ -14,13 +14,7 @@ function Invoke-Native {
 }
 
 $vcpkgDir = Join-Path $root 'vendor/vcpkg'
-if (-not (Test-Path (Join-Path $vcpkgDir 'bootstrap-vcpkg.bat'))) {
-    Invoke-Native git @('-C', $root, 'submodule', 'update', '--init', 'vendor/vcpkg')
-}
-$vcpkgExe = Join-Path $vcpkgDir 'vcpkg.exe'
-if (-not (Test-Path $vcpkgExe)) {
-    Invoke-Native (Join-Path $vcpkgDir 'bootstrap-vcpkg.bat') @('-disableMetrics')
-}
+Invoke-Native git @('-C', $root, 'submodule', 'update', '--init', 'vendor/vcpkg')   # offline and instant when up to date
 
 $stampDir = Join-Path $root 'vcpkg_installed'
 $stamp = Join-Path $stampDir ".stamp-$($env:SIM_VCPKG_TRIPLET)"
@@ -28,7 +22,17 @@ $manifestHash = (Get-FileHash (Join-Path $root 'vcpkg.json') -Algorithm SHA256).
 $vcpkgRev = (& git -C $vcpkgDir rev-parse HEAD).Trim()
 $want = "$manifestHash $vcpkgRev"
 if ((Test-Path $stamp) -and ((Get-Content $stamp -Raw).Trim() -eq $want) -and (Test-Path (Join-Path $env:SIM_VCPKG_PREFIX 'share/sdl3'))) {
-    return
+    return   # up to date: no network
+}
+
+# (Re)bootstrap the vcpkg tool if it is missing or the pinned tool version changed.
+$vcpkgExe = Join-Path $vcpkgDir 'vcpkg.exe'
+$toolStamp = Join-Path $stampDir '.tool-stamp'
+$toolWant = (Get-FileHash (Join-Path $vcpkgDir 'scripts/vcpkg-tool-metadata.txt') -Algorithm SHA256).Hash
+if (-not (Test-Path $vcpkgExe) -or -not (Test-Path $toolStamp) -or ((Get-Content $toolStamp -Raw).Trim() -ne $toolWant)) {
+    Invoke-Native (Join-Path $vcpkgDir 'bootstrap-vcpkg.bat') @('-disableMetrics')
+    New-Item -ItemType Directory -Force $stampDir | Out-Null
+    Set-Content -Path $toolStamp -Value $toolWant
 }
 
 Write-Host "setup-deps: installing vcpkg dependencies ($($env:SIM_VCPKG_TRIPLET))..."
