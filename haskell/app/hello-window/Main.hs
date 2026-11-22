@@ -4,9 +4,14 @@ module Main (main) where
 
 import Control.Exception (bracket, finally)
 import Control.Monad (unless)
+import Data.Char (isDigit)
 import Foreign.C.Types (CUInt)
-import SDL3
-import System.Environment (getArgs)
+import Options.Applicative
+
+-- sdl3-hs exports a record field called `info` (SDLStorageInterface) that clashes with
+-- optparse-applicative's `info`.
+import SDL3 hiding (info)
+import Text.Read (readMaybe)
 
 windowTitle :: String
 windowTitle = "hello-window"
@@ -17,11 +22,21 @@ windowHeight = 600
 windowFlags :: CUInt
 windowFlags = 0
 
+-- | A non-negative decimal integer. Plain 'read' would also accept hex (@0x10@) and surrounding
+-- spaces, and would silently wrap around on overflow for 'Int'.
+nonNegativeInt :: ReadM Int
+nonNegativeInt = eitherReader \s -> case readMaybe s of
+  Just n | all isDigit s, n <= toInteger (maxBound :: Int) -> Right (fromInteger n)
+  _ -> Left ("expected a non-negative integer, got " <> show s)
+
 -- | Optional @--frames N@ exits after N frames (used by the headless smoke test).
-parseFrames :: [String] -> Maybe Int
-parseFrames ("--frames" : n : _) = Just (read n)
-parseFrames (_ : rest) = parseFrames rest
-parseFrames [] = Nothing
+framesParser :: Parser (Maybe Int)
+framesParser =
+  optional
+    ( option
+        nonNegativeInt
+        (long "frames" <> metavar "N" <> help "Exit after N frames")
+    )
 
 sdlFail :: String -> IO a
 sdlFail what = do
@@ -54,7 +69,13 @@ withSDLWindowAndRenderer =
 
 main :: IO ()
 main = do
-  maxFrames <- parseFrames <$> getArgs
+  -- On a bad command line execParser prints usage and the error, then exits non-zero, before
+  -- SDL is initialised. --help prints the usage text and exits 0.
+  maxFrames <-
+    execParser $
+      info
+        (framesParser <**> helper)
+        (fullDesc <> progDesc "Open an SDL3 window and clear it to a solid colour.")
   sdlInit [SDL_INIT_VIDEO] `orFail` "SDL_Init"
   withSDLWindowAndRenderer (\(_, renderer) -> loop renderer maxFrames) `finally` sdlQuit
   where

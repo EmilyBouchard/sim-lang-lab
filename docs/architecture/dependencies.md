@@ -30,6 +30,34 @@ static, which would bake SDL into each binary and leave C# with nothing to load.
 - **Haskell (`sdl3-hs`):** its `pkgconfig-depends: sdl3` is resolved with `PKG_CONFIG_LIBDIR`
   pointing at the vcpkg `.pc` files, which also supply the rpath on Linux (Windows uses `PATH`, as for C++). Cabal looks for `pkg-config`, but vcpkg's port only ships `pkgconf.exe`, so `scripts/env.ps1` copies it to `pkg-config.exe`.
 
+## Command-line parsing
+
+Argument parsing is not what this project is about, so each app uses its language's standard
+library. Each gives `--help` and a clear message for a bad option or value.
+
+| Language | Library | Comes from |
+|---|---|---|
+| C++ | [CLI11](https://github.com/CLIUtils/CLI11) | Vendored single header, `cpp/third_party/CLI11/` (version, source and hash in its README) |
+| C# | `System.CommandLine` | `PackageReference` in the `.csproj` |
+| Haskell | `optparse-applicative` | `build-depends` in `sim-lang-lab.cabal` |
+
+Contract for `hello-window` (the same in all three): `--frames N` takes a non-negative integer and
+exits after N frames. A bad or missing value, or an unknown option, prints a message and usage to
+stderr and exits non-zero **before** SDL is initialised. `--help` prints usage and exits 0.
+The exit code on error is whatever the library chooses (CLI11 uses its own codes, the other two use
+1), so tests check for a non-zero exit or the message, not a specific number. One known difference:
+CLI11 also accepts hex, octal and binary prefixes (`--frames 0x10`); the C# and Haskell parsers
+accept decimal digits only.
+
+Notes:
+- CLI11 is vendored as its single header instead of coming from vcpkg. The vcpkg port builds a
+  *precompiled* library, which does not link against MSVC AddressSanitizer builds (STL annotation
+  mismatch), and a C++-only dependency does not belong in the manifest all three languages share.
+  `cpp/third_party/.clang-format` turns the formatter off for it.
+- `sdl3-hs` exports a record field named `info`, which clashes with optparse-applicative's `info`,
+  so `Main.hs` imports `SDL3 hiding (info)`.
+- CI runs `cabal update` before building, because `optparse-applicative` is not a GHC boot package.
+
 ## Upgrading SDL3
 
 1. Update the `vendor/vcpkg` submodule to a commit whose `versions/s-/sdl3.json` has the new version.

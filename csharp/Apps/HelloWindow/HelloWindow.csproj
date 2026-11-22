@@ -5,11 +5,11 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="SDL3-CS" Version="3.4.20" />
+    <PackageReference Include="System.CommandLine" Version="3.0.0" />
   </ItemGroup>
   <!-- SDL3-CS ships no native library; copy the pinned vcpkg SDL3 next to the app so it is the one loaded. -->
   <Target Name="RequireSimVcpkgPrefix" BeforeTargets="BeforeBuild">
-    <Error Condition="'$(SimVcpkgPrefix)' == ''"
-           Text="SIM_VCPKG_PREFIX is not set. Run scripts/setup-deps.sh, then source scripts/env.sh (or use ./build.sh). On Windows: scripts/setup-deps.ps1, then . ./scripts/env.ps1 (or use ./build.ps1)." />
+    <Error Condition="'$(SimVcpkgPrefix)' == ''" Text="SIM_VCPKG_PREFIX is not set. Run scripts/setup-deps.sh, then source scripts/env.sh (or use ./build.sh). On Windows: scripts/setup-deps.ps1, then . ./scripts/env.ps1 (or use ./build.ps1)." />
   </Target>
   <ItemGroup Condition="'$(SimVcpkgPrefix)' != '' And $([MSBuild]::IsOSPlatform('Linux'))">
     <None Include="$(SimVcpkgPrefix)/lib/libSDL3.so.*.*.*" Link="libSDL3.so" CopyToOutputDirectory="PreserveNewest" />

@@ -50,5 +50,8 @@ jobs:
             ~/.cabal/store
             haskell/dist-newstyle
           key: haskell-${{ hashFiles('haskell/*.cabal', 'haskell/cabal.project') }}
+      # optparse-applicative is not a GHC boot package, so cabal needs the Hackage index.
+      - name: Update the Hackage package index
+        run: cabal update
       - name: Build + smoke run (headless)
         run: ./build.sh haskell apps/hello-window --test

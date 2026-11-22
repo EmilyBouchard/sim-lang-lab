@@ -89,6 +89,10 @@ cd sim-lang-lab
 ./bench.sh                                  # (planned) run benchmarks and compare languages
 ```
 
+`hello-window` takes `--frames N` (exit after N frames; the smoke test uses it) and `--help` in all three
+languages. A bad value is reported with a message and a non-zero exit before SDL starts. See
+[`docs/architecture/dependencies.md`](/docs/architecture/dependencies.md) for the parsing libraries.
+
 You can also build each language directory directly with its own tools
 (`cmake`, `dotnet`, `cabal`). See
 [`docs/architecture/build-orchestration.md`](/docs/architecture/build-orchestration.md).

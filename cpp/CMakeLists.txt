@@ -37,5 +37,11 @@ if(NOT DEFINED ENV{SIM_VCPKG_PREFIX})
 endif()
 find_package(SDL3 3.4 REQUIRED CONFIG PATHS "$ENV{SIM_VCPKG_PREFIX}" NO_DEFAULT_PATH)
 
+# CLI11 is vendored as its single-header release (see third_party/CLI11/README.md). SYSTEM keeps
+# our warning flags from firing inside it.
+add_library(CLI11 INTERFACE)
+add_library(CLI11::CLI11 ALIAS CLI11)
+target_include_directories(CLI11 SYSTEM INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/third_party/CLI11")
+
 enable_testing()
 add_subdirectory(apps/hello-window)

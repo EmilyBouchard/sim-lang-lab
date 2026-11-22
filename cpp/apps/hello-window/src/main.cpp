@@ -1,9 +1,9 @@
+#include <CLI11.hpp>
 #include <SDL3/SDL.h>
 
 #include <cstdio>
-#include <cstdlib>
-#include <cstring>
 #include <memory>
+#include <optional>
 
 namespace
 {
@@ -21,13 +21,13 @@ struct RendererDeleter
 
 int main(int argc, char** argv)
 {
+    CLI::App app{"Open an SDL3 window and clear it to a solid colour."};
     // Optional: --frames N exits after N frames (used by the headless smoke test).
-    long max_frames = -1;
-    for (int i = 1; i + 1 < argc; ++i)
-    {
-        if (std::strcmp(argv[i], "--frames") == 0)
-            max_frames = std::strtol(argv[i + 1], nullptr, 10);
-    }
+    // Unsigned, so CLI11 itself rejects negative and out-of-range values.
+    std::optional<unsigned long> max_frames;
+    app.add_option("--frames", max_frames, "Exit after N frames")->type_name("N");
+    // Prints usage and the error (or --help text) and returns early; nothing is initialised yet.
+    CLI11_PARSE(app, argc, argv);
 
     if (!SDL_Init(SDL_INIT_VIDEO))
     {
@@ -47,7 +47,7 @@ int main(int argc, char** argv)
     std::unique_ptr<SDL_Renderer, RendererDeleter> renderer{raw_renderer};
 
     bool running = true;
-    for (long frame = 0; running && frame != max_frames; ++frame)
+    for (unsigned long frame = 0; running && (!max_frames || frame != *max_frames); ++frame)
     {
         SDL_Event e;
         while (SDL_PollEvent(&e))

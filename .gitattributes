@@ -2,3 +2,6 @@
 *.sh text eol=lf
 .githooks/* text eol=lf
 *.ps1 text eol=crlf
+
+# Vendored third-party code
+cpp/third_party/** linguist-vendored
