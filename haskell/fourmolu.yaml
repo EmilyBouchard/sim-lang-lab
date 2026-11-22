@@ -1,0 +1,8 @@
+indentation: 2
+column-limit: 100
+function-arrows: leading
+comma-style: leading
+import-export-style: leading
+haddock-style: single-line
+respectful: true
+indent-wheres: true

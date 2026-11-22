@@ -1,0 +1,27 @@
+name: setup-deps
+description: Install system packages vcpkg needs to build SDL3 on Linux, then install the pinned SDL3 via vcpkg.
+runs:
+  using: composite
+  steps:
+    - name: System packages for vcpkg's SDL3 build
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ninja-build ccache pkg-config zip unzip \
+          autoconf autoconf-archive automake libtool \
+          libx11-dev libxft-dev libxext-dev libxcursor-dev libxi-dev libxrandr-dev libxss-dev libxtst-dev \
+          libwayland-dev libxkbcommon-dev libegl1-mesa-dev libibus-1.0-dev libdrm-dev libgbm-dev \
+          libasound2-dev libpulse-dev libltdl-dev
+    - name: Cache vcpkg binaries and install tree
+      uses: actions/cache@v6
+      with:
+        path: |
+          ~/.cache/vcpkg/archives
+          vcpkg_installed
+        # vcpkg.json embeds the vcpkg submodule commit as its builtin-baseline (scripts/setup-deps
+        # fails if the two disagree). ImageOS is in the key because vcpkg_installed holds binaries
+        # built against the runner image's toolchain.
+        key: vcpkg-${{ runner.os }}-${{ env.ImageOS }}-${{ hashFiles('vcpkg.json') }}
+    - name: Install pinned SDL3 with vcpkg
+      shell: bash
+      run: ./scripts/setup-deps.sh

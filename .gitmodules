@@ -1,0 +1,6 @@
+[submodule "haskell/vendor/sdl3-hs"]
+	path = haskell/vendor/sdl3-hs
+	url = https://github.com/klukaszek/sdl3-hs.git
+[submodule "vendor/vcpkg"]
+	path = vendor/vcpkg
+	url = https://github.com/microsoft/vcpkg.git

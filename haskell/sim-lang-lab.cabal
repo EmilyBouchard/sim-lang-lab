@@ -1,0 +1,18 @@
+cabal-version:      3.0
+name:               sim-lang-lab
+version:            0.1.0.0
+synopsis:           Haskell track of sim-lang-lab
+build-type:         Simple
+
+common shared
+    default-language: GHC2021
+    ghc-options:      -Wall -Wcompat
+
+executable hello-window
+    import:           shared
+    main-is:          Main.hs
+    hs-source-dirs:   app/hello-window
+    build-depends:    base >=4.17 && <5,
+                      optparse-applicative >=0.18 && <0.20,
+                      sdl3
+    ghc-options:      -threaded -rtsopts

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "name": "sim-lang-lab",
+  "version": "0.1.0",
+  "builtin-baseline": "b94b6bdc326c0faea9070b4862e0e0d4e4ac5396",
+  "dependencies": [
+    "sdl3",
+    "pkgconf"
+  ],
+  "overrides": [
+    { "name": "sdl3", "version": "3.4.20" }
+  ]
+}

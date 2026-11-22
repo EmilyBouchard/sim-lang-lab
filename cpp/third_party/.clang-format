@@ -1,0 +1,3 @@
+# Vendored code: leave it exactly as upstream released it.
+DisableFormat: true
+SortIncludes: Never

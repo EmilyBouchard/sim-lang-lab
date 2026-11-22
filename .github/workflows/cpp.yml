@@ -1,0 +1,21 @@
+name: cpp
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  cpp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with: { submodules: true }
+      - uses: ./.github/actions/setup-deps
+      - uses: hendrikmuhs/ccache-action@v1.2
+        with: { key: cpp }
+      - name: Build + smoke test (ASan/UBSan, dummy video driver)
+        run: ./build.sh cpp apps/hello-window --test

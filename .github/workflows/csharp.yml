@@ -1,0 +1,21 @@
+name: csharp
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  csharp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with: { submodules: true }
+      - uses: ./.github/actions/setup-deps
+      - uses: actions/setup-dotnet@v6
+        with: { global-json-file: csharp/global.json }
+      - name: Build + smoke run (headless)
+        run: ./build.sh csharp apps/hello-window --test
