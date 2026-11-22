@@ -1,16 +1,15 @@
 name: haskell
 on:
-  push:
-    paths: ['haskell/**', 'shared/**', 'scripts/**', 'vcpkg.json', 'vendor/vcpkg', 'build.sh', '.github/**']
   pull_request:
-    paths: ['haskell/**', 'shared/**', 'scripts/**', 'vcpkg.json', 'vendor/vcpkg', 'build.sh', '.github/**']
+  push:
+    branches: [main]
 permissions:
   contents: read
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  build:
+  haskell:
     runs-on: ubuntu-latest
     env:
       GHC_VERSION: '9.10.3'

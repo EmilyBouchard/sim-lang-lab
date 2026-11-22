@@ -1,16 +1,15 @@
 name: csharp
 on:
-  push:
-    paths: ['csharp/**', 'shared/**', 'scripts/**', 'vcpkg.json', 'vendor/vcpkg', 'build.sh', '.github/**']
   pull_request:
-    paths: ['csharp/**', 'shared/**', 'scripts/**', 'vcpkg.json', 'vendor/vcpkg', 'build.sh', '.github/**']
+  push:
+    branches: [main]
 permissions:
   contents: read
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  build:
+  csharp:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
