@@ -3,6 +3,8 @@
 ```
 /repo
 ├── build.sh / build.ps1          # top-level orchestrator
+├── format.sh / format.ps1        # run or check every language's formatter
+├── .githooks/pre-commit          # runs the formatter check before each commit
 ├── bench.sh                      # cross-language benchmark runner + report
 ├── docs/
 │   └── decisions/                # ADRs: e.g. why float/double toggle, why this UI approach
@@ -10,9 +12,10 @@
 │   ├── cpp.yml
 │   ├── csharp.yml
 │   ├── haskell.yml
+│   ├── format.yml                # ./format.sh all --check with pinned formatter versions
 │   └── benchmarks.yml            # scheduled/manual, not on every PR
 ├── vcpkg.json                    # pinned SDL3 (see dependencies.md)
-├── scripts/                      # setup-deps / env scripts (sh + ps1)
+├── scripts/                      # setup-deps / env scripts (sh + ps1); vsenv.ps1 loads MSVC on Windows
 ├── vendor/vcpkg/                 # vcpkg submodule
 ├── cpp/
 ├── csharp/

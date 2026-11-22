@@ -13,10 +13,12 @@ step. Each tier lists a goal, concrete objectives, and acceptance criteria.
 **Objectives:**
 - Open a window, poll events, clear to a color, present, clean shutdown on close/Esc.
 **Acceptance criteria:**
-- Runs on all three languages via `build.sh <lang> apps/hello-window`.
+- Runs on all three languages via `build.sh <lang> apps/hello-window` (`build.ps1` on Windows).
 - Closes cleanly with no leaked resources (sanitizer/valgrind for C++, no unhandled
-  exceptions for C#, no resource-leak warnings for Haskell).
-- CI builds and smoke-runs it headless on every push.
+  exceptions for C#, no resource-leak warnings for Haskell). C++ leak detection is
+  Linux-only: MSVC's AddressSanitizer does not detect leaks.
+- CI builds and smoke-runs it headless on every pull request and every push to `main`
+  (`main` only accepts changes through a PR whose checks pass; see `docs/architecture/ci.md`).
 
 ### 0.2 — Input & Primitive Drawing
 **Goal:** Exercise input handling and basic 2D drawing primitives.

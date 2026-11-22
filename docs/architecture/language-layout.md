@@ -5,6 +5,7 @@ Structure shown for C++; C#/Haskell mirror this shape using their native idioms 
 ```
 cpp/
 ├── CMakeLists.txt                # top-level for this language
+├── third_party/                  # vendored code, e.g. the CLI11 single header (formatter disabled)
 ├── libs/
 │   ├── math/                     # hand-rolled vec/mat/quat, float & double
 │   │   ├── include/math/
