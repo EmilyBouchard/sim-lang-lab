@@ -8,16 +8,14 @@ set_tests_properties(hello-window-smoke PROPERTIES
   ENVIRONMENT "SDL_VIDEO_DRIVER=dummy;SDL_RENDER_DRIVER=software"
   TIMEOUT 30)
 
-# Argument handling. Bad input must be reported and rejected before SDL starts. The tests match
-# the error text (which also proves the program did not hang); the exit code is not checked here.
-function(hello_window_args_test name regex)
-  add_test(NAME hello-window-args-${name} COMMAND hello-window ${ARGN})
-  set_tests_properties(hello-window-args-${name} PROPERTIES PASS_REGULAR_EXPRESSION "${regex}" TIMEOUT 30)
-endfunction()
-
-hello_window_args_test(help "--frames" --help)
-hello_window_args_test(not-a-number "--frames" --frames abc)
-hello_window_args_test(trailing-garbage "--frames" --frames 5x)
-hello_window_args_test(negative "--frames" --frames -3)
-hello_window_args_test(missing-value "--frames" --frames)
-hello_window_args_test(unknown-option "--frame" --frame 5)
+# Command-line handling: the same script checks the C# and Haskell apps too (exit code, message,
+# usage, no hang). It lives in the repo-level scripts/ folder and needs Python 3.
+find_package(Python3 COMPONENTS Interpreter)
+if(Python3_FOUND)
+  add_test(NAME hello-window-cli
+           COMMAND ${Python3_EXECUTABLE} -I ${CMAKE_SOURCE_DIR}/../scripts/check_hello_window_cli.py
+                   -- $<TARGET_FILE:hello-window>)
+  set_tests_properties(hello-window-cli PROPERTIES TIMEOUT 300)
+else()
+  message(WARNING "Python 3 not found: the hello-window-cli test is not defined.")
+endif()

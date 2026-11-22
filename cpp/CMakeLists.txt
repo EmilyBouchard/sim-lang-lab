@@ -16,6 +16,8 @@ if(MSVC)
   # MSVC has ASan but no UBSan. ASan is incompatible with the default /RTC1 runtime checks.
   if(SIM_SANITIZE)
     add_compile_options(/fsanitize=address)
+    # ASan and incremental linking are incompatible (the linker warns LNK4300 and ignores it).
+    add_link_options(/INCREMENTAL:NO)
     # Drop /RTC1 two ways: CMake >= 3.31 with policy CMP0184 NEW models it as a variable, older
     # behaviour (or policy OLD) keeps it in the flags string.
     set(CMAKE_MSVC_RUNTIME_CHECKS "")

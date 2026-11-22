@@ -55,6 +55,15 @@ function Invoke-Headless {
     }
 }
 
+# Run the shared command-line contract test (scripts/check_hello_window_cli.py) against an app.
+function Invoke-CliCheck {
+    param([Parameter(Mandatory)][string[]]$Command)
+    if ($SmokeApp -ne 'hello-window') { return }
+    $py = Get-Command python, python3 -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $py) { throw 'Python 3 is required for -Test (command-line checks).' }
+    Invoke-Native $py.Source (@('-I', (Join-Path $Root 'scripts/check_hello_window_cli.py'), '--') + $Command)
+}
+
 # hello-window -> HelloWindow
 function ConvertTo-Pascal([string]$Name) {
     ($Name -split '-' | ForEach-Object { $_.Substring(0, 1).ToUpper() + $_.Substring(1) }) -join ''
@@ -91,6 +100,7 @@ function Build-Csharp {
         $runProj = "Apps/$(ConvertTo-Pascal $SmokeApp)"
         if ($Test) {
             Invoke-Headless { Invoke-Native dotnet @('run', '--project', $runProj, '--no-build', '--', '--frames', '5') }
+            Invoke-CliCheck @('dotnet', 'run', '--project', $runProj, '--no-build', '--')
         }
         if ($Run) { Invoke-Native dotnet @('run', '--project', $runProj, '--no-build') }
     }
@@ -111,6 +121,7 @@ function Build-Haskell {
         }
         if ($Test) {
             Invoke-Headless { Invoke-Native cabal @('run', '-v0', $SmokeApp, '--', '--frames', '5') }
+            Invoke-CliCheck @('cabal', 'run', '-v0', $SmokeApp, '--')
         }
         if ($Run) { Invoke-Native cabal @('run', '-v0', $SmokeApp) }
     }
