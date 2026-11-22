@@ -4,6 +4,7 @@ module Main (main) where
 
 import Control.Exception (bracket, finally)
 import Control.Monad (unless)
+import Foreign.C.Types (CUInt)
 import SDL3
 import System.Environment (getArgs)
 
@@ -13,7 +14,8 @@ windowWidth :: Int
 windowWidth = 800
 windowHeight :: Int
 windowHeight = 600
-windowOption = 0
+windowFlags :: CUInt
+windowFlags = 0
 
 -- | Optional @--frames N@ exits after N frames (used by the headless smoke test).
 parseFrames :: [String] -> Maybe Int
@@ -42,7 +44,7 @@ quitRequested = go False
 createSDLWindowAndRenderer :: IO (SDLWindow, SDLRenderer)
 createSDLWindowAndRenderer =
   maybe (sdlFail "SDL_CreateWindowAndRenderer") pure
-    =<< sdlCreateWindowAndRenderer windowTitle windowWidth windowHeight windowOption
+    =<< sdlCreateWindowAndRenderer windowTitle windowWidth windowHeight windowFlags
 
 withSDLWindowAndRenderer :: ((SDLWindow, SDLRenderer) -> IO a) -> IO a
 withSDLWindowAndRenderer =
