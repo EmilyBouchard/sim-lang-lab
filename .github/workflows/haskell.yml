@@ -15,8 +15,8 @@ jobs:
       GHC_VERSION: '9.10.3'
       CABAL_VERSION: '3.16.1.0'
     steps:
-      - uses: actions/checkout@v4
-        with: { submodules: recursive }
+      - uses: actions/checkout@v7
+        with: { submodules: true }
       - uses: ./.github/actions/setup-deps
       # Installing GHC through ghcup takes ~2.5 min, so cache the GHC ghcup installs.
       # Only ghc/<version> is cached: /usr/local/.ghcup itself is root-owned (tar cannot set its
@@ -24,10 +24,10 @@ jobs:
       # an installed cabal through a symlink in .ghcup/bin, which we don't restore, so it would
       # fail trying to reinstall into the restored dir. cabal installs in ~20s anyway (cache ~330 MiB).
       - name: Cache ghcup GHC
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: /usr/local/.ghcup/ghc/${{ env.GHC_VERSION }}
-          key: ghcup-v3-${{ runner.os }}-ghc${{ env.GHC_VERSION }}
+          key: ghcup-v3-${{ runner.os }}-${{ env.ImageOS }}-ghc${{ env.GHC_VERSION }}
       - uses: haskell-actions/setup@v2
         with: { ghc-version: '${{ env.GHC_VERSION }}', cabal-version: '${{ env.CABAL_VERSION }}' }
       # haskell/cabal.project pins `with-compiler: ghc-<version>`. On a cache hit ghcup's versioned
@@ -42,13 +42,13 @@ jobs:
           ghc --version
           cabal --version
           which ghc cabal
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: |
             ~/.cabal/packages
             ~/.cabal/store
             haskell/dist-newstyle
-          key: haskell-${{ hashFiles('haskell/*.cabal', 'haskell/cabal.project') }}
+          key: haskell-${{ runner.os }}-${{ env.ImageOS }}-${{ hashFiles('haskell/*.cabal', 'haskell/cabal.project') }}
       # optparse-applicative is not a GHC boot package, so cabal needs the Hackage index.
       - name: Update the Hackage package index
         run: cabal update

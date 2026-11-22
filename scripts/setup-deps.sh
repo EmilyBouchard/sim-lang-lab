@@ -10,8 +10,18 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 vcpkg_dir="$root/vendor/vcpkg"
 git -C "$root" submodule update --init vendor/vcpkg   # offline and instant when up to date
 
+vcpkg_rev="$(git -C "$vcpkg_dir" rev-parse HEAD)"
+# The manifest's builtin-baseline must be the vendor/vcpkg commit, or vcpkg resolves versions
+# against a different registry snapshot than the one we bootstrap.
+baseline="$(sed -n 's/.*"builtin-baseline"[[:space:]]*:[[:space:]]*"\([0-9a-f]*\)".*/\1/p' "$root/vcpkg.json")"
+if [[ "$baseline" != "$vcpkg_rev" ]]; then
+  echo "setup-deps: vcpkg.json builtin-baseline ($baseline) does not match vendor/vcpkg ($vcpkg_rev)." >&2
+  echo "            Update the baseline (see docs/architecture/dependencies.md, \"Upgrading SDL3\")." >&2
+  exit 1
+fi
+
 stamp="$root/vcpkg_installed/.stamp-$SIM_VCPKG_TRIPLET"
-want="$(cksum < "$root/vcpkg.json") $(git -C "$vcpkg_dir" rev-parse HEAD)"
+want="$(cksum < "$root/vcpkg.json") $vcpkg_rev"
 if [[ -f "$stamp" && "$(cat "$stamp")" == "$want" && -d "$SIM_VCPKG_PREFIX/share/sdl3" ]]; then
   exit 0
 fi

@@ -3,3 +3,7 @@ packages:
   vendor/sdl3-hs
 
 with-compiler: ghc-9.10.3
+
+-- Freeze the package index so the build plan is reproducible (CI runs `cabal update`, which would
+-- otherwise let dependencies float). Bump this deliberately when you want newer packages.
+index-state: 2026-11-22T00:00:00Z
