@@ -16,7 +16,9 @@ step. Each tier lists a goal, concrete objectives, and acceptance criteria.
 - Runs on all three languages via `build.sh <lang> apps/hello-window` (`build.ps1` on Windows).
 - Closes cleanly with no leaked resources (sanitizer/valgrind for C++, no unhandled
   exceptions for C#, no resource-leak warnings for Haskell). C++ leak detection is
-  Linux-only: MSVC's AddressSanitizer does not detect leaks.
+  Linux-only: MSVC's AddressSanitizer does not detect leaks. The CI smoke run exercises the
+  `--frames` exit path; the close-button and Esc paths, and Haskell resource cleanup, are
+  verified by review and by running the app (`build.ps1 <lang> apps/hello-window -Run`).
 - CI builds and smoke-runs it headless on every pull request and every push to `main`
   (`main` only accepts changes through a PR whose checks pass; see `docs/architecture/ci.md`).
 

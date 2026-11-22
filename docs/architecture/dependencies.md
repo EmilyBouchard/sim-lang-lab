@@ -42,12 +42,19 @@ library. Each gives `--help` and a clear message for a bad option or value.
 | Haskell | `optparse-applicative` | `build-depends` in `sim-lang-lab.cabal` |
 
 Contract for `hello-window` (the same in all three): `--frames N` takes a non-negative integer and
-exits after N frames. A bad or missing value, or an unknown option, prints a message and usage to
-stderr and exits non-zero **before** SDL is initialised. `--help` prints usage and exits 0.
+exits after N frames. A bad or missing value, or an unknown option, prints a message that names the
+offending text, followed by the usage (C++ and C# print the whole help, Haskell the usage line and
+description), and exits non-zero **before** SDL is initialised. `--help` prints usage and exits 0.
+All three read the value as a 64-bit integer.
 The exit code on error is whatever the library chooses (CLI11 uses its own codes, the other two use
 1), so tests check for a non-zero exit or the message, not a specific number. One known difference:
 CLI11 also accepts hex, octal and binary prefixes (`--frames 0x10`); the C# and Haskell parsers
 accept decimal digits only.
+
+`scripts/check_hello_window_cli.py` checks this contract against any of the three apps: the exit
+code, that the message names the bad value, that the usage is printed, and that the app does not
+hang. ctest runs it for C++ (`hello-window-cli`), and `build.sh --test` / `build.ps1 -Test` run it
+for C# and Haskell. It needs Python 3 and only the standard library.
 
 Notes:
 - CLI11 is vendored as its single header instead of coming from vcpkg. The vcpkg port builds a
@@ -62,7 +69,8 @@ Notes:
 
 1. Update the `vendor/vcpkg` submodule to a commit whose `versions/s-/sdl3.json` has the new version.
 2. Set `builtin-baseline` in `vcpkg.json` to that commit and update the `sdl3` override.
-3. Commit the submodule pointer and manifest together.
+3. Commit the submodule pointer and manifest together. `scripts/setup-deps.*` fail with a clear
+   message if `builtin-baseline` and the `vendor/vcpkg` commit disagree.
 
 ## Windows prerequisites
 

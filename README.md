@@ -33,7 +33,7 @@ then Barnes-Hut, then the Fast Multipole Method, in 2D and 3D.
 | C# | .NET SDK (needed for generic math, `INumber<T>`); the projects target `net10.0` |
 | Haskell | GHC 9.10.3 (pinned in `haskell/cabal.project`) + Cabal 3.16, [`sdl3-hs`](https://github.com/klukaszek/sdl3-hs) (git submodule, see below) |
 | All | SDL 3.4 (installed for you by vcpkg), SQLite 3 |
-| Benchmark reports | Python 3 |
+| Tests, benchmark reports | Python 3 (`--test` runs the command-line checks with it) |
 
 ### Windows
 
@@ -90,6 +90,9 @@ cd sim-lang-lab
 ./bench.sh                                  # (planned) run benchmarks and compare languages
 ```
 
+The language argument is optional: `./build.sh --test` and `.\build.ps1 -Test` build and test
+everything.
+
 `hello-window` takes `--frames N` (exit after N frames; the smoke test uses it) and `--help` in all three
 languages. A bad value is reported with a message and a non-zero exit before SDL starts. See
 [`docs/architecture/dependencies.md`](/docs/architecture/dependencies.md) for the parsing libraries.
@@ -128,6 +131,11 @@ It works on Linux and on Windows (Git for Windows runs it with its bundled
 .NET SDK on your `PATH`. To fix a failed check, run `./format.sh`, stage the
 changes and commit again. To skip the hook in an emergency, use
 `git commit --no-verify`.
+
+The hook checks what is staged, not the working tree: while it runs, tracked files with unstaged
+edits are swapped for their staged version and then copied back, so a partly staged file
+(`git add -p`) is checked as it will be committed. With `git commit -a` or `git commit <path>`
+it checks the working tree instead.
 
 ## Documentation
 

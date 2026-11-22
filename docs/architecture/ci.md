@@ -23,8 +23,17 @@ The JPL snapshot tool's CI path exercises only its parser against committed fixt
 
 `main` accepts changes only through pull requests, and a PR can merge only when `cpp`, `csharp`, `haskell` and `format` all pass. The rule also applies to repository admins, and blocks force pushes and branch deletion. No approving reviews are required (the repo has one maintainer, who cannot approve their own PR). Settings: GitHub, Settings, Branches, rule for `main`, or `gh api repos/<owner>/<repo>/branches/main/protection`.
 
-If you rename a job or add a workflow that should be required, update the required checks in that rule too, or the PR will wait for a check that never reports.
+If you rename a job or add a workflow that should be required, update the required checks in that rule too, or the PR will wait for a check that never reports. Each required check is tied to the GitHub Actions app (id 15368), so a status with the same name from another source does not satisfy it.
 
 ## Formatting
 
 `format.yml` runs `./format.sh all --check`, the same command as the pre-commit hook. It pins `clang-format` (from PyPI), `fourmolu` (the release binary, verified by SHA-256) and the .NET SDK (from `csharp/global.json`), so a file that passes locally passes in CI. When you upgrade a formatter locally, update the pin in `format.yml` in the same PR.
+
+## Reproducibility pins
+
+- **.NET:** `csharp/global.json` pins SDK `10.0.404` with `rollForward: latestPatch`, and CI installs exactly that SDK with `global-json-file`. Bump it deliberately.
+- **Haskell:** `index-state` in `haskell/cabal.project` freezes the Hackage index the solver sees, so `cabal update` in CI cannot change the build plan. `cabal.project` is part of the cache key, so bumping the date also refreshes the cache.
+- **vcpkg:** `builtin-baseline` in `vcpkg.json` must equal the `vendor/vcpkg` commit. `scripts/setup-deps.*` fail if they differ.
+- **Cache keys** include the runner image (`ImageOS`), so binaries built on one Ubuntu image are not restored on another.
+- **Checkout:** `submodules: true` initialises only the top-level submodules (`vendor/vcpkg`, `haskell/vendor/sdl3-hs`), the same as `build.sh`, not `sdl3-hs`'s own nested SDL clone.
+- **Actions** are referenced by their major tag (`@v7`, `@v6`, ...), not pinned to a commit SHA. That is a deliberate readability trade-off. Dependabot or a periodic look at the Node.js deprecation warnings in the run logs keeps them current.

@@ -15,7 +15,7 @@
 │   ├── format.yml                # ./format.sh all --check with pinned formatter versions
 │   └── benchmarks.yml            # scheduled/manual, not on every PR
 ├── vcpkg.json                    # pinned SDL3 (see dependencies.md)
-├── scripts/                      # setup-deps / env scripts (sh + ps1); vsenv.ps1 loads MSVC on Windows
+├── scripts/                      # setup-deps / env scripts (sh + ps1); vsenv.ps1 loads MSVC on Windows; check_hello_window_cli.py is the shared CLI test
 ├── vendor/vcpkg/                 # vcpkg submodule
 ├── cpp/
 ├── csharp/
