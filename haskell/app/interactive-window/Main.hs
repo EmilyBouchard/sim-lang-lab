@@ -12,11 +12,12 @@ tail' = drop 1
 
 type Point = (Double, Double)
 
-data Action = Quit
+data Action = Quit | MouseTo Float Float
 
-data World = World {quitting :: Bool}
+data World = World {quitting :: Bool, trianglePos :: Point}
 defaultWorld :: World
-defaultWorld = World{quitting = False}
+defaultWorld =
+  World{quitting = False, trianglePos = (fromIntegral windowWidth / 2, fromIntegral windowHeight / 2)}
 
 uv0 :: SDLFPoint
 uv0 = SDLFPoint 0 0
@@ -103,7 +104,7 @@ main = do
         loop renderer world' ticksNS'
       where
         circle = circleTriangles (400, 300) 50
-        triangle = map (\(x, y) -> SDLFPoint (realToFrac x) (realToFrac y)) $ trianglePoints (400, 300) 30
+        triangle = map (\(x, y) -> SDLFPoint (realToFrac x) (realToFrac y)) $ trianglePoints (trianglePos world) 30
 
 {- basic implementation
 drainEvents :: IO [SDLEvent]
@@ -129,11 +130,12 @@ toAction :: SDLEvent -> Maybe Action
 toAction (SDLEventQuit _) = Just Quit
 toAction (SDLEventKeyboard k)
   | sdlKeyboardType k == SDL_EVENT_KEY_DOWN && sdlKeyboardKey k == SDLKEscape = Just Quit
+toAction (SDLEventMouseMotion m) = Just $ MouseTo (sdlMouseMotionX m) (sdlMouseMotionY m)
 toAction _ = Nothing
 
 apply :: World -> Action -> World
 apply w Quit = w{quitting = True}
-apply w _ = w
+apply w (MouseTo x y) = w{trianglePos = (realToFrac x, realToFrac y)}
 
 step :: Double -> World -> World
 step _ w = w
