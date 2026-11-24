@@ -2,14 +2,15 @@ module Main (main) where
 
 import Control.Exception (bracket, finally)
 import Control.Monad (unless)
-import Data.Char (isDigit)
 import Data.Maybe (mapMaybe)
 import Data.Word (Word64)
-import Foreign.C.Types (CFloat, CUInt)
-import Options.Applicative
-import Options.Applicative.Common (evalParser)
+import Foreign.C.Types (CUInt)
 import SDL3 hiding (cos, info, round, sin)
-import Text.Read (readMaybe)
+
+tail' :: [a] -> [a]
+tail' = drop 1
+
+type Point = (Double, Double)
 
 data Action = Quit
 
@@ -20,30 +21,29 @@ defaultWorld = World{quitting = False}
 uv0 :: SDLFPoint
 uv0 = SDLFPoint 0 0
 
-triangleVertices :: [SDLVertex]
-triangleVertices =
-  [ SDLVertex (SDLFPoint 100 100) triangleColor uv0
-  , SDLVertex (SDLFPoint 100 200) triangleColor uv0
-  , SDLVertex (SDLFPoint 300 100) triangleColor uv0
-  ]
-  where
-    triangleColor = SDLFColor 1 1 1 1
+pointToVertex :: Point -> SDLFColor -> SDLFPoint -> SDLVertex
+pointToVertex (x, y) = SDLVertex (SDLFPoint (realToFrac x) (realToFrac y))
 
-circleVertices :: CFloat -> CFloat -> CFloat -> [SDLVertex]
-circleVertices x y r = concatMap (\(p1, p2) -> [p1, p2, center]) rim
+pointsToVertices :: [Point] -> SDLFColor -> [SDLVertex]
+pointsToVertices xs c = map (\x -> pointToVertex x c uv0) xs
+
+circleTriangles :: Point -> Double -> [Point]
+circleTriangles (x, y) r = concatMap (\(p1, p2) -> [p1, p2, (x, y)]) rim
   where
     steps :: Int
     steps = 32
-    angleStep :: CFloat
     angleStep = pi * 2 / fromIntegral steps
-    circleColor = SDLFColor 0 0 1 1
-    center = SDLVertex (SDLFPoint x y) circleColor uv0
-    pointN :: Int -> SDLFPoint
-    pointN n = SDLFPoint (x + r * cos (fromIntegral n * angleStep)) (y + r * sin (fromIntegral n * angleStep))
-    vertexN :: Int -> SDLVertex
-    vertexN n = SDLVertex (pointN n) circleColor uv0
-    rim :: [(SDLVertex, SDLVertex)]
-    rim = let xs = [vertexN v | v <- [0 .. steps]] in zip xs (tail xs)
+    pointN n = (x + r * cos (fromIntegral n * angleStep), y + r * sin (fromIntegral n * angleStep))
+    rim = let xs = [pointN v | v <- [0 .. steps]] in zip xs (tail' xs)
+
+trianglePoints :: Point -> Double -> [Point]
+trianglePoints (x, y) r = [pointA . angleN $ n | n <- [0 .. 3]]
+  where
+    angleN n = 3 * pi / 2 + n * (2 * pi / 3)
+    pointA a = (x + r * cos a, y + r * sin a)
+
+circleColor :: SDLFColor
+circleColor = SDLFColor 0 0 1 1
 
 windowTitle :: String
 windowTitle = "interactive-window"
@@ -77,9 +77,6 @@ withSDLWindowAndRenderer =
     createSDLWindowAndRenderer
     (\(window, renderer) -> sdlDestroyRenderer renderer >> sdlDestroyWindow window)
 
-vertexToTuple :: SDLVertex -> (CFloat, CFloat)
-vertexToTuple (SDLVertex (SDLFPoint x y) _ _) = (x, y)
-
 main :: IO ()
 main = do
   sdlInit [SDL_INIT_VIDEO] `orFail` "SDL_Init"
@@ -95,13 +92,18 @@ main = do
       let dt = nsToSeconds $ ticksNS' - ticksNS
       world' <- step dt . foldl' apply world <$> drainActions
       unless (quitting world') $ do
-        _ <- sdlSetRenderDrawColor renderer 0 0 0 255 -- black background
+        _ <- sdlSetRenderDrawColor renderer 45 45 45 255 -- dark background
         _ <- sdlRenderClear renderer
-        _ <- sdlSetRenderDrawColor renderer 0 255 0 255
+        _ <- sdlRenderGeometry renderer Nothing (pointsToVertices circle circleColor) Nothing
+        _ <- sdlSetRenderDrawColor renderer 0 255 0 255 -- green square
         _ <- sdlRenderFillRect renderer (Just $ SDLFRect 100 100 100 100)
-        _ <- sdlRenderGeometry renderer Nothing (circleVertices 400 300 50) Nothing
+        _ <- sdlSetRenderDrawColor renderer 255 0 0 255 -- red triangle
+        _ <- sdlRenderLines renderer triangle
         _ <- sdlRenderPresent renderer
         loop renderer world' ticksNS'
+      where
+        circle = circleTriangles (400, 300) 50
+        triangle = map (\(x, y) -> SDLFPoint (realToFrac x) (realToFrac y)) $ trianglePoints (400, 300) 30
 
 {- basic implementation
 drainEvents :: IO [SDLEvent]
