@@ -16,3 +16,12 @@ executable hello-window
                       optparse-applicative >=0.18 && <0.20,
                       sdl3
     ghc-options:      -threaded -rtsopts
+
+executable interactive-window
+    import:           shared
+    main-is:          Main.hs
+    hs-source-dirs:   app/interactive-window
+    build-depends:    base >=4.17 && <5,
+                      optparse-applicative >=0.18 && <0.20,
+                      sdl3
+    ghc-options:      -threaded -rtsopts
