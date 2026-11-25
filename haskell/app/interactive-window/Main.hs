@@ -14,10 +14,17 @@ type Point = (Double, Double)
 
 data Action = Quit | MouseTo Point
 
-data World = World {quitting :: Bool, trianglePos :: Point}
+data Bouncing = Bouncing {bouncingRadius :: Double, bouncingPos :: Point, bouncingVel :: Point}
+
+data World = World {quitting :: Bool, trianglePos :: Point, bouncingCircle :: Bouncing}
 defaultWorld :: World
 defaultWorld =
-  World{quitting = False, trianglePos = (fromIntegral windowWidth / 2, fromIntegral windowHeight / 2)}
+  World
+    { quitting = False
+    , trianglePos = (fromIntegral windowWidth / 2, fromIntegral windowHeight / 2)
+    , bouncingCircle =
+        Bouncing 50 (fromIntegral windowWidth / 2, fromIntegral windowHeight / 2) (160, 100)
+    }
 
 uv0 :: SDLFPoint
 uv0 = SDLFPoint 0 0
@@ -64,8 +71,8 @@ nsPerSecond = 1e9
 nsToSeconds :: Word64 -> Double
 nsToSeconds ns = fromIntegral ns / nsPerSecond
 
-secondsToNs :: Double -> Word64
-secondsToNs s = round (s * nsPerSecond)
+-- secondsToNs :: Double -> Word64
+-- secondsToNs s = round (s * nsPerSecond)
 
 sdlFail :: String -> IO a
 sdlFail what = (\e -> fail (what <> ": " <> e)) =<< sdlGetError
@@ -96,6 +103,8 @@ main = do
       let dt = nsToSeconds $ ticksNS' - ticksNS
       world' <- step dt . foldl' apply world <$> drainActions
       unless (quitting world') $ do
+        let circle =
+              circleTriangles (bouncingPos . bouncingCircle $ world') (bouncingRadius . bouncingCircle $ world')
         let triangle = map pointToFPoint $ trianglePoints (trianglePos world') 30
         _ <- sdlSetRenderDrawColor renderer 45 45 45 255 -- dark background
         _ <- sdlRenderClear renderer
@@ -106,8 +115,6 @@ main = do
         _ <- sdlRenderLines renderer triangle
         _ <- sdlRenderPresent renderer
         loop renderer world' ticksNS'
-      where
-        circle = circleTriangles (400, 300) 50
 
 {- basic implementation
 drainEvents :: IO [SDLEvent]
@@ -141,4 +148,19 @@ apply w Quit = w{quitting = True}
 apply w (MouseTo p) = w{trianglePos = p}
 
 step :: Double -> World -> World
-step _ w = w
+step dt w = w{bouncingCircle = circle{bouncingPos = newPos}}
+  where
+    circle@(Bouncing _ (x, y) (vx, vy)) = bounce (bouncingCircle w)
+    newPos = (x + (vx * dt), y + (vy * dt))
+
+bounce :: Bouncing -> Bouncing
+bounce b@(Bouncing r (x, y) (vx, vy)) = b{bouncingVel = (vx', vy')}
+  where
+    vx' = reflect r (fromIntegral windowWidth - r) x vx
+    vy' = reflect r (fromIntegral windowHeight - r) y vy
+
+reflect :: Double -> Double -> Double -> Double -> Double
+reflect lo hi pos vel
+  | vel > 0 && pos > hi = -vel
+  | vel < 0 && pos < lo = -vel
+  | otherwise = vel
