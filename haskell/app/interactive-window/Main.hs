@@ -12,7 +12,7 @@ tail' = drop 1
 
 type Point = (Double, Double)
 
-data Action = Quit | MouseTo Float Float
+data Action = Quit | MouseTo Point
 
 data World = World {quitting :: Bool, trianglePos :: Point}
 defaultWorld :: World
@@ -22,8 +22,11 @@ defaultWorld =
 uv0 :: SDLFPoint
 uv0 = SDLFPoint 0 0
 
+pointToFPoint :: Point -> SDLFPoint
+pointToFPoint (x, y) = SDLFPoint (realToFrac x) (realToFrac y)
+
 pointToVertex :: Point -> SDLFColor -> SDLFPoint -> SDLVertex
-pointToVertex (x, y) = SDLVertex (SDLFPoint (realToFrac x) (realToFrac y))
+pointToVertex p = SDLVertex (pointToFPoint p)
 
 pointsToVertices :: [Point] -> SDLFColor -> [SDLVertex]
 pointsToVertices xs c = map (\x -> pointToVertex x c uv0) xs
@@ -38,7 +41,7 @@ circleTriangles (x, y) r = concatMap (\(p1, p2) -> [p1, p2, (x, y)]) rim
     rim = let xs = [pointN v | v <- [0 .. steps]] in zip xs (tail' xs)
 
 trianglePoints :: Point -> Double -> [Point]
-trianglePoints (x, y) r = [pointA . angleN $ n | n <- [0 .. 3]]
+trianglePoints (x, y) r = [pointA (angleN n) | n <- [0 .. 3]]
   where
     angleN n = 3 * pi / 2 + n * (2 * pi / 3)
     pointA a = (x + r * cos a, y + r * sin a)
@@ -93,6 +96,7 @@ main = do
       let dt = nsToSeconds $ ticksNS' - ticksNS
       world' <- step dt . foldl' apply world <$> drainActions
       unless (quitting world') $ do
+        let triangle = map pointToFPoint $ trianglePoints (trianglePos world') 30
         _ <- sdlSetRenderDrawColor renderer 45 45 45 255 -- dark background
         _ <- sdlRenderClear renderer
         _ <- sdlRenderGeometry renderer Nothing (pointsToVertices circle circleColor) Nothing
@@ -104,7 +108,6 @@ main = do
         loop renderer world' ticksNS'
       where
         circle = circleTriangles (400, 300) 50
-        triangle = map (\(x, y) -> SDLFPoint (realToFrac x) (realToFrac y)) $ trianglePoints (trianglePos world) 30
 
 {- basic implementation
 drainEvents :: IO [SDLEvent]
@@ -130,12 +133,12 @@ toAction :: SDLEvent -> Maybe Action
 toAction (SDLEventQuit _) = Just Quit
 toAction (SDLEventKeyboard k)
   | sdlKeyboardType k == SDL_EVENT_KEY_DOWN && sdlKeyboardKey k == SDLKEscape = Just Quit
-toAction (SDLEventMouseMotion m) = Just $ MouseTo (sdlMouseMotionX m) (sdlMouseMotionY m)
+toAction (SDLEventMouseMotion m) = Just $ MouseTo (realToFrac (sdlMouseMotionX m), realToFrac (sdlMouseMotionY m))
 toAction _ = Nothing
 
 apply :: World -> Action -> World
 apply w Quit = w{quitting = True}
-apply w (MouseTo x y) = w{trianglePos = (realToFrac x, realToFrac y)}
+apply w (MouseTo p) = w{trianglePos = p}
 
 step :: Double -> World -> World
 step _ w = w
