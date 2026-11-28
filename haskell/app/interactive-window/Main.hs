@@ -7,6 +7,7 @@ import Data.Maybe (mapMaybe)
 import Data.Word (Word64)
 import Foreign.C.Types (CUInt)
 import SDL3 hiding (cos, info, round, sin, sqrt)
+import Text.Printf (printf)
 
 tail' :: [a] -> [a]
 tail' = drop 1
@@ -37,6 +38,46 @@ defaultWorld =
     , bouncingCircle =
         Bouncing 50 (fromIntegral windowWidth / 2, fromIntegral windowHeight / 2) (160, 100)
     }
+
+data FrameStats
+  = FrameStats
+      !Int
+      -- ^ frames
+      !Double
+      -- ^ total dt
+      !Double
+      -- ^ min dt
+      !Double
+      -- ^ max dt
+
+data FpsSummary = FpsSummary
+  { fpsAvg :: !Double
+  , fpsMin :: !Double
+  , fpsMax :: !Double
+  }
+
+data FpsCounter = FpsCounter
+  { acc :: FrameStats
+  , shown :: Maybe FpsSummary
+  }
+defaultCounter :: FpsCounter
+defaultCounter = FpsCounter (FrameStats 0 0 (1 / 0) 0) Nothing
+
+tickFps :: Double -> FpsCounter -> (FpsCounter, Maybe FpsSummary)
+tickFps tick counter
+  | total > fpsWindow = (FpsCounter (FrameStats 1 tick tick tick) (Just newSummary), Just newSummary)
+  | otherwise =
+      ( FpsCounter
+          (FrameStats (frames + 1) (total + tick) (min minDt tick) (max maxDt tick))
+          (shown counter)
+      , Nothing
+      )
+  where
+    (FrameStats frames total minDt maxDt) = acc counter
+    newSummary = FpsSummary (fromIntegral frames / total) (1 / maxDt) (1 / minDt)
+
+fpsWindow :: Double
+fpsWindow = 0.5
 
 uv0 :: SDLFPoint
 uv0 = SDLFPoint 0 0
@@ -109,14 +150,22 @@ main = do
   withSDLWindowAndRenderer (\(_, renderer) -> run renderer) `finally` sdlQuit
   where
     orFail act what = act >>= \ok -> unless ok (sdlFail what)
+
     run renderer = do
       _ <- sdlSetRenderVSync renderer 1 -- 1: sync to every display refresh
-      startTick <- sdlGetTicksNS
-      loop renderer defaultWorld startTick
-    loop renderer world ticksNS = do
+      loop renderer defaultWorld Nothing defaultCounter
+
+    showPerfLog time (Just summary) = Just ("[perf] " ++ show time ++ " " ++ formatPerfLog summary)
+    showPerfLog _ _ = Nothing
+
+    loop renderer world ticksNS fpsCounter = do
       ticksNS' <- sdlGetTicksNS
-      let dt = nsToSeconds $ ticksNS' - ticksNS
+      let dt = maybe 0 (\tick -> nsToSeconds $ ticksNS' - tick) ticksNS
+      let (fpsCounter', report) = case ticksNS of
+            Nothing -> (fpsCounter, Nothing)
+            Just _ -> tickFps dt fpsCounter
       world' <- step dt . foldl' apply world <$> drainActions
+
       unless (quitting world') $ do
         let circle =
               circleTriangles (bouncingPos . bouncingCircle $ world') (bouncingRadius . bouncingCircle $ world')
@@ -129,8 +178,29 @@ main = do
         _ <- sdlRenderFillRect renderer (Just $ SDLFRect (realToFrac rx) (realToFrac ry) 100 100)
         _ <- sdlSetRenderDrawColor renderer 255 0 0 255 -- red triangle
         _ <- sdlRenderLines renderer triangle
+        printFps renderer fpsCounter'
         _ <- sdlRenderPresent renderer
-        loop renderer world' ticksNS'
+        maybe (pure ()) putStrLn $ showPerfLog ticksNS' report
+        loop renderer world' (Just ticksNS') fpsCounter'
+
+printFps :: SDLRenderer -> FpsCounter -> IO ()
+printFps _ FpsCounter{shown = Nothing} = pure ()
+printFps renderer FpsCounter{shown = (Just summary)} = do
+  _ <- sdlSetRenderDrawColor renderer 255 255 255 255
+  _ <- sdlRenderDebugText renderer 6 6 ("avg: " ++ fmtPerf (fpsAvg summary))
+  _ <- sdlRenderDebugText renderer 6 16 ("min: " ++ fmtPerf (fpsMin summary))
+  _ <- sdlRenderDebugText renderer 6 26 ("max: " ++ fmtPerf (fpsMax summary))
+  pure ()
+
+fmtPerf :: Double -> String
+fmtPerf v = printf "%.2f" v
+
+formatPerfLog :: FpsSummary -> [Char]
+formatPerfLog (FpsSummary a mi ma) = "avg: " ++ a' ++ " min: " ++ mi' ++ " max: " ++ ma'
+  where
+    a' = fmtPerf a
+    mi' = fmtPerf mi
+    ma' = fmtPerf ma
 
 {- basic implementation
 drainEvents :: IO [SDLEvent]
